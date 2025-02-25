@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atividade 1</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body id="pagina">
+    <header>
+        <h1>Atividade 1</h1>
+    </header>
+
+    <main>
+        <button id="mudarCor">Mudar Cores</button>
+
+        <h2>Consumo de API (GET)</h2>
+        <button id="buscarMensagem">Buscar Mensagem</button>
+        <div id="mensagemAPI"></div>
+
+        <h2>Enviar Dados (POST)</h2>
+        <form id="formularioPost">
+            <div class="campo">
+                <input type="text" id="nomePost" placeholder="Nome" required>
+                <span class="erro" id="erroNome"></span>
+            </div>
+            
+            <div class="campo">
+                <input type="email" id="emailPost" placeholder="Email" required>
+                <span class="erro" id="erroEmail"></span>
+            </div>
+            
+            <button type="submit" id="botaoPost">Enviar</button>
+        </form>
+        <div id="respostaPost"></div>
+
+        <h2>Lista de Usuários</h2>
+        <button id="carregarTabela">Carregar Usuários</button>
+        <button id="filtrar">Filtrar +21</button>
+        <button id="resetarFiltro">Resetar</button>
+
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Email</th>
+                    <th>Idade</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="corpoTabela"></tbody>
+        </table>
+    </main>
+
+    <footer>
+        <p>Ana Julia Henriques Neves - RM:98263</p>
+    </footer>
+
+    <script>
+        let usuarios = [];
+        let usuariosOriginais = [];
+
+        
+        document.querySelector("#buscarMensagem").addEventListener("click", function() {
+            fetch("http://demo9533987.mockable.io/mensagem")
+                .then(response => response.json())
+                .then(data => {
+                    document.querySelector("#mensagemAPI").textContent = data.mensagem;
+                })
+                .catch(error => console.error("Erro ao buscar mensagem:", error));
+        });
+
+        
+        document.querySelector("#formularioPost").addEventListener("submit", function(event) {
+            event.preventDefault();
+            let nome = document.querySelector("#nomePost").value.trim();
+            let email = document.querySelector("#emailPost").value.trim();
+            let erroNome = document.querySelector("#erroNome");
+            let erroEmail = document.querySelector("#erroEmail");
+            let valido = true;
+
+            
+            erroNome.textContent = "";
+            erroEmail.textContent = "";
+
+            if (nome === "") {
+                erroNome.textContent = "Nome obrigatório!";
+                valido = false;
+            }
+
+            if (email === "") {
+                erroEmail.textContent = "Email obrigatório!";
+                valido = false;
+            } else if (!email.includes("@") || !email.includes(".")) {
+                erroEmail.textContent = "Email inválido!";
+                valido = false;
+            }
+
+            
+            if (!valido) return;
+
+            
+            let dadosUsuario = { nome, email };
+
+            fetch("http://demo9533987.mockable.io/enviarDados", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(dadosUsuario)
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.querySelector("#respostaPost").textContent = "Dados enviados com sucesso!";
+                console.log("Resposta do servidor:", data);
+            })
+            .catch(error => console.error("Erro ao enviar dados:", error));
+        });
+
+        
+        document.querySelector("#carregarTabela").addEventListener("click", function() {
+            fetch("http://demo9533987.mockable.io/tabela")
+                .then(response => response.json())
+                .then(data => {
+                    usuarios = data;
+                    usuariosOriginais = [...data];
+                    exibirTabela(usuarios);
+                })
+                .catch(error => console.error("Erro ao buscar tabela:", error));
+        });
+
+        
+        document.querySelector("#filtrar").addEventListener("click", function() {
+            let usuariosFiltrados = usuarios.filter(usuario => usuario.idade > 21);
+            exibirTabela(usuariosFiltrados);
+        });
+
+        
+        document.querySelector("#resetarFiltro").addEventListener("click", function() {
+            exibirTabela(usuariosOriginais);
+        });
+
+        
+        function exibirTabela(dados) {
+            let tbody = document.querySelector("#corpoTabela");
+            tbody.innerHTML = "";
+
+            dados.forEach((usuario, index) => {
+                let tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${usuario.nome}</td>
+                    <td>${usuario.email}</td>
+                    <td>${usuario.idade}</td>
+                    <td>
+                        <button onclick="editarUsuario(${index})">Editar</button>
+                        <button onclick="removerUsuario(${index})">Excluir</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        
+        function editarUsuario(index) {
+            let usuario = usuarios[index];
+            if (usuario) {
+                let novoNome = prompt("Digite o novo nome:", usuario.nome);
+                if (novoNome !== null) {
+                    usuario.nome = novoNome;
+                    exibirTabela(usuarios);
+                }
+            }
+        }
+
+        
+        function removerUsuario(index) {
+            usuarios.splice(index, 1);
+            usuariosOriginais = [...usuarios];
+            exibirTabela(usuarios);
+        }
+
+        
+        document.querySelector("#mudarCor").addEventListener("click", function() {
+            let pagina = document.querySelector("#pagina");
+            let botoes = document.querySelectorAll("button");
+            let tabela = document.querySelector("table");
+
+            let novaCorFundo = "#e5d4ed";
+            let novaCorTexto = "#5a189a";
+            let novaCorBotao = "#5a189a";
+            let novaCorTabela = "#f4c2c2";
+
+            pagina.style.backgroundColor = novaCorFundo;
+            pagina.style.color = novaCorTexto;
+            tabela.style.backgroundColor = novaCorTabela;
+
+            botoes.forEach(botao => {
+                botao.style.backgroundColor = novaCorBotao;
+                botao.style.color = "#ffffff";
+            });
+        });
+
+    </script>
+</body>
+</html>
